@@ -133,15 +133,22 @@ function brandt_version() {
     _version=$1
   elif [ -n "$VERSION" ]; then
     _version=$VERSION
+  elif [ -n "$_version" ]; then
+    _version=$_version
   else
     _version=0.1
   fi
   echo -e "$( basename $0 ) $_version"
-  echo -e "Copyright (C) 2011 Free Software Foundation, Inc."
+  echo -e "Copyright (C) 2013 Free Software Foundation, Inc."
   echo -e "License GPLv3+: GNU GPL version 3 or later <http://gnu.org/licenses/gpl.html>."
-  echo -e "This is free software: you are free to change and redistribute it."
-  echo -e "There is NO WARRANTY, to the extent permitted by law.\n"
-  echo -e "Written by Bob Brandt <projects@brandt.ie>."
+  echo -e "This program is free software: you can redistribute it and/or modify it under"
+  echo -e "the terms of the GNU General Public License as published by the Free Software"
+  echo -e "Foundation, either version 3 of the License, or (at your option) any later"
+  echo -e "version."
+  echo -e "This program is distributed in the hope that it will be useful, but WITHOUT ANY"
+  echo -e "WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A"
+  echo -e "PARTICULAR PURPOSE.  See the GNU General Public License for more details."
+  echo -e "\nWritten by Bob Brandt <projects@brandt.ie>."
   exit 0
 }
 

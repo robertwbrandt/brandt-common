@@ -27,3 +27,9 @@ def getTerminalSize():
   return ( int(cr[1]), int(cr[0]) )
 
 
+
+def sortDictbyField(d, field):
+  """
+  Return the sorted keys of a dictionary, based on a specific field of the dictionary
+  """
+  return sorted(d.keys(), key=lambda x: d[x][field])
