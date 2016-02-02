@@ -285,7 +285,7 @@ function brandt_deamon_wrapper() {
     "kill" )              pkill -9 "$_executable" > /dev/null 2>&1 ;;
     "installed" )         test -x "$_initd_script" ;;
     "configured" )        test -r "$_initd_script" ;;
-    "status-process" )    ps -ef | grep -v "grep" | grep _initd_script > /dev/null 2>&1 ;;
+    "status-process" )    ps -ef | grep -v "grep" | grep "$_initd_script" > /dev/null 2>&1 ;;
     "status-checkproc" )  /sbin/checkproc "$_initd_script" > /dev/null 2>&1 ;;
     "status-web" )        wget --output-document=/dev/null --no-check-certificate "$_initd_script" > /dev/null 2>&1 ;;                        
     * )                   if [ -x "$_initd_script" ]; then
