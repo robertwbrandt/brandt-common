@@ -498,7 +498,35 @@ function Host2IP() {
     return $?
 }
 
+# Return the difference in days between two given dates
+function dateDiff() {
+#  _date1=$( echo "$1" | sed "s|^.*,.*,||" )
+  local _date1="$1"
+  local _date2="$2"
+  local _returntype=$( lower "${3:-hours}" )
+  local _divisior=1
 
+  case "$_returntype" in
+    "seconds" )  _divisior=1 ;;
+    "minutes" )  _divisior=60 ;;
+    "hours" )    _divisior=3600 ;;
+    "days" )     _divisior=86400 ;;
+    "weeks" )    _divisior=604800 ;;
+    "months" )   _divisior=2592000 ;;
+    "years" )    _divisior=31536000 ;;
+  esac
+
+  test -z "$_date2" && _date2=$( date -u )
+
+  # _sec1=$( date --date="$_date1" +%s )
+  # _sec2=$( date --date="$_date2" +%s )
+  # echo "$_sec1"
+  # echo "$_sec2"
+  # echo $(( ( $_sec2 - $_sec1 ) / (60) ))
+  # return 0
+
+  echo $(( ( $(date --date="$_date2" +%s) - $(date --date="$_date1" +%s) ) / $_divisior ))
+}
 
 # echo -e "\n${BOLD_RED}This file is a collection of BASH utilities for Brandt scripts${NORMAL}"
 # echo -e "Copyright (C) 2011 Free Software Foundation, Inc."
