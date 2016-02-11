@@ -23,11 +23,29 @@ git config --global user.email "bob@brandt.ie"
 git config --global user.name "Bob Brandt"
 
 
+if "%1" == "/h"    CALL :usage 0
+if "%1" == "/help" CALL :usage 0
+if "%1" == "/v"       CALL :version 0
+if "%1" == "/version" CALL :version 0
 
+SET _cmd=
+if "%1" == "/p"    SET _cmd=push
+if "%1" == "/push" SET _cmd=push
+if "%1" == "/pull" SET _cmd=pull
+if "%1" == "/clone" SET _cmd=clone
 
+if "%_cmd_" == "" (
+	SET _cmd=pull
+) ELSE (
+	SHIFT
+)
+if "$1" == "" (
 
-:: do something cool, then log it
-CALL :usage 0
+) ELSE (
+	if "%_cmd%" == "pull"  CALL :pull 
+	if "%_cmd%" == "push"  CALL :push
+	if "%_cmd%" == "clone" CALL :clone
+)
 
 :: force execution to quit at the end of the "main" logic
 EXIT /B %ERRORLEVEL%
@@ -42,7 +60,7 @@ ECHO "     /clone        clone/download this project"
 ECHO " /p, /push         push/save this project"
 ECHO " /h, /help         display this help and exit"
 ECHO " /v, /version      output version information and exit"
-EXIT /B %1
+EXIT %1
 
 :: Show version and license
 :version
@@ -58,7 +76,7 @@ ECHO "WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS 
 ECHO "PARTICULAR PURPOSE.  See the GNU General Public License for more details."
 ECHO.
 ECHO "Written by Bob Brandt <projects@brandt.ie>."
-EXIT /B 0
+EXIT 0
 
 :: Pull directory from GIT repository
 :pull
