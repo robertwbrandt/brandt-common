@@ -7,6 +7,7 @@
 
 _version=1.2
 _brandt_utils=/opt/brandt/common/brandt.sh
+_this_script=/opt/brandt/common/update.sh
 _this_conf=/etc/brandt/update.conf
 
 [ ! -r "$_brandt_utils" ] && echo "Unable to find required file: $_brandt_utils" 1>&2 && exit 6
@@ -22,6 +23,8 @@ if [ ! -f "$_this_conf" ]; then
 	  echo "_proxy=\"\"" ) > "$_this_conf"
 fi
 . "$_this_conf"
+
+[ ! -L "$_base/update" ] && ln -s "$_this_script" "$_base/update"
 
 function getPassword() {
 	local _user="$1"
