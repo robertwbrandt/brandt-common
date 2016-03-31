@@ -7,13 +7,21 @@
 
 _version=1.2
 _brandt_utils=/opt/brandt/common/brandt.sh
-_base=/opt/brandt
-_location="Work"
-_gitURL="https://github.com/robertwbrandt"
-_proxy="http://webproxy.i.opw.ie:3128/"
+_this_conf=/etc/brandt/update.conf
 
 [ ! -r "$_brandt_utils" ] && echo "Unable to find required file: $_brandt_utils" 1>&2 && exit 6
 . "$_brandt_utils"
+
+if [ ! -f "$_this_conf" ]; then
+	mkdir $( dirname "$_this_conf" ) 2> /dev/null
+	( echo "#     Configuration file for update script"
+	  echo "#     Bob Brandt <projects@brandt.ie>"
+	  echo "_base=/opt/brandt"
+	  echo "_location=\"$( hostname )\""
+	  echo "_gitURL=\"https://github.com/robertwbrandt\""
+	  echo "_proxy=\"\"" ) > "$_this_conf"
+fi
+. "$_this_conf"
 
 function getPassword() {
 	local _user="$1"
