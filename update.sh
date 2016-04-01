@@ -15,12 +15,12 @@ _this_conf=/etc/brandt/update.conf
 
 if [ ! -f "$_this_conf" ]; then
 	mkdir $( dirname "$_this_conf" ) 2> /dev/null
-	( echo "#     Configuration file for update script"
-	  echo "#     Bob Brandt <projects@brandt.ie>"
-	  echo "_base=/opt/brandt"
-	  echo "_location=\"$( hostname )\""
-	  echo "_gitURL=\"https://github.com/robertwbrandt\""
-	  echo "_proxy=\"${HTTPS_PROXY:-HTTP_PROXY}\"" ) > "$_this_conf"
+	( echo '#     Configuration file for update script'
+	  echo '#     Bob Brandt <projects@brandt.ie>'
+	  echo '_base=/opt/brandt'
+	  echo '_location="$( hostname )"'
+	  echo '_gitURL="https://github.com/robertwbrandt"'
+	  echo '_proxy="${HTTPS_PROXY:-HTTP_PROXY}"' ) > "$_this_conf"
 fi
 . "$_this_conf"
 
