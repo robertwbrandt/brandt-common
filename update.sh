@@ -50,10 +50,11 @@ function pull() {
  			_gitURL=$( echo "$_gitURL" | sed "s|://|://$_user:$_pass@|" )
  			git remote set-url origin "$_gitURL/$_basedir.git"
  		fi
- 		git pull --all -v || git fetch --all -v
 
+		[ -n "$_force" ] && git reset --hard origin/master
+
+ 		git pull --all -v || git fetch --all -v
 		rc=$?
-		#git reset --hard origin/master
 		popd > /dev/null
 		return $rc
 	else
@@ -113,14 +114,15 @@ function usage() {
 	  echo -e "     --clone        clone/download this project"
 	  echo -e " -u, --user         username for this project (will need password)"
 	  echo -e " -p, --push         push/save this project"
+	  echo -e " -f, --force        force pull/load this project"
 	  echo -e " -h, --help         display this help and exit"
 	  echo -e " -v, --version      output version information and exit" ) >&$_output
     exit $_exitcode
 }
 
 # Execute getopt
-if ! _args=$( getopt -o u:pvh -l "user:,pull,clone,push,help,version" -n "$0" -- "$@" 2>/dev/null ); then
-    _err=$( getopt -o u:pvh -l "user:,pull,clone,push,help,version" -n "$0" -- "$@" 2>&1 >/dev/null )
+if ! _args=$( getopt -o u:pfvh -l "user:,pull,clone,push,force,help,version" -n "$0" -- "$@" 2>/dev/null ); then
+    _err=$( getopt -o u:pfvh -l "user:,pull,clone,push,force,help,version" -n "$0" -- "$@" 2>&1 >/dev/null )
     usage 1 "${BOLD_RED}$_err${NORMAL}"
 fi
 
@@ -132,6 +134,7 @@ eval set -- "$_args";
 _cmd="pull"
 _user=""
 _pass=""
+_force=""
 
 while /bin/true ; do
     case "$1" in
@@ -139,6 +142,7 @@ while /bin/true ; do
              --clone )     _cmd="clone" ;;
         -u | --user )      _user="$2" ; shift ;;
         -p | --push )      _cmd="push" ;;
+        -f | --force )     _cmd="pull" ; _force="force" ;;
         -h | --help )      usage 0 ;;
         -v | --version )   brandt_version $_version ;;
         -- )               shift ; break ;;
