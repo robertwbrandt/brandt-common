@@ -40,6 +40,8 @@ def printTable(items, columns, separator="\t"):
   Print a list of values in neat columns
   """  
   tmp = []
+  widths=[]
+
   for i in range(0,len(items),columns):
     tmp.append([])
     for j in range(columns):
@@ -47,10 +49,8 @@ def printTable(items, columns, separator="\t"):
         tmp[-1].append(str(items[i + j]))
       else:
         tmp[-1].append('')
-  
-  widths=[]
-  for i in range(columns):
-    widths.append(max([len(x[i]) for x in tmp]))
+
+  for i in range(columns): widths.append(max([len(x[i]) for x in tmp]))
 
   for i in range(len(tmp)):
     for j in range(columns):
@@ -61,55 +61,55 @@ def printTable(items, columns, separator="\t"):
 
 
 
-class find(object):
+# class find(object):
 
-  BlockFile = property( lambda self: 'b' )
-  CharacterFile = property( lambda self: 'c' )
-  Directory = property( lambda self: 'd' )
-  PipeFile = property( lambda self: 'p' )
-  RegularFile = property( lambda self: 'f' )
-  SymbolicLink = property( lambda self: 'l' )
-  Socket = property( lambda self: 's' )
+#   BlockFile = property( lambda self: 'b' )
+#   CharacterFile = property( lambda self: 'c' )
+#   Directory = property( lambda self: 'd' )
+#   PipeFile = property( lambda self: 'p' )
+#   RegularFile = property( lambda self: 'f' )
+#   SymbolicLink = property( lambda self: 'l' )
+#   Socket = property( lambda self: 's' )
 
-  def __setPath(self, path):
-    path = str(path)
-    if not os.direxists(path): raise IOError, path + " is not a valid path."
-    self.__path = path
+#   def __setPath(self, path):
+#     path = str(path)
+#     if not os.direxists(path): raise IOError, path + " is not a valid path."
+#     self.__path = path
 
-  def __setIncludes(self, includes):
-    if includes:
-      pass
+#   def __setIncludes(self, includes):
+#     if includes:
+#       pass
 
-  def __setExcludes(self, excludes):
-    if excludes:
-      pass
+#   def __setExcludes(self, excludes):
+#     if excludes:
+#       pass
 
-  def __setMinFileAge(self, minFileAge):
-    if minFileAge:
-      pass
+#   def __setMinFileAge(self, minFileAge):
+#     if minFileAge:
+#       pass
 
-  def __setMaxFileAge(self, maxFileAge):
-    if maxFileAge:
-      pass
+#   def __setMaxFileAge(self, maxFileAge):
+#     if maxFileAge:
+#       pass
 
-  def __setMinFileSize(self, minFileSize):
-    if minFileSize:
-      pass
+#   def __setMinFileSize(self, minFileSize):
+#     if minFileSize:
+#       pass
 
-  def __setMaxFileSize(self, maxFileSize):
-    if maxFileSize:
-      pass
+#   def __setMaxFileSize(self, maxFileSize):
+#     if maxFileSize:
+#       pass
 
-  def __setFileTypes(self, fileTypes):
-    if fileTypes:
-      pass
+#   def __setFileTypes(self, fileTypes):
+#     if fileTypes:
+#       pass
 
-  def __setDepth(self, depth):
-    if depth:
-      pass
+#   def __setDepth(self, depth):
+#     if depth:
+#       pass
 
-  def __init__(self, path, includes=None, excludes=None, minFileAge=None, maxFileAge=None, fileTypes= ):
-    pass
+#   def __init__(self, path, includes=None, excludes=None, minFileAge=None, maxFileAge=None, fileTypes= ):
+#     pass
 
 
 
@@ -121,8 +121,9 @@ class find(object):
 
 # Start program
 if __name__ == "__main__":
-  for root,  dirs, files in os.walk(".", topdown=True):
-    print "root", root
-    print "dirs", dirs
-    print "files", files
-    print
+  # for root,  dirs, files in os.walk(".", topdown=True):
+  #   print "root", root
+  #   print "dirs", dirs
+  #   print "files", files
+  #   print
+  printTable(range(10),4)
