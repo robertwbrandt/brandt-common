@@ -44,7 +44,7 @@ def printTable(items, columns, separator="\t"):
     tmp.append([])
     for j in range(columns):
       if i + j < len(items): 
-        tmp[-1].append(str(items[i + j])
+        tmp[-1].append(str(items[i + j]))
       else:
         tmp[-1].append('')
   
