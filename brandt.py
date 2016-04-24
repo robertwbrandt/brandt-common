@@ -72,7 +72,7 @@ def strXML(string):
   character that is not known to be compatible.
   """    
   global allowedASCII
-  return ''.join([ s for s in string if ord(s) in allowedASCII ])
+  return ''.join([ s for s in str(string) if ord(s) in allowedASCII ])
 
 
 
