@@ -57,7 +57,22 @@ def printTable(items, columns, separator="\t"):
       tmp[i][j] = tmp[i][j].ljust(widths[j])
     print separator.join(tmp[i])
 
-  
+
+def proper(string):
+  """
+  A wrapper for title() but also takes car eof weird Words like MySQL
+  """    
+  string=str(string).lower().replace("mysql","MySQL")
+  return string.title()
+
+allowedASCII = tuple([9,10,13] + range(32,127))
+def strXML(string):
+  """
+  Converts strings to an XML safe string. Basically ripping out every 
+  character that is not known to be compatible.
+  """    
+  global allowedASCII
+  return ''.join([ s for s in string if ord(s) in allowedASCII ])
 
 
 
