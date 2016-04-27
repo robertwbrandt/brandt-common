@@ -3,6 +3,7 @@
 Common Python code used between different projects
 """
 import fcntl, termios, struct, os
+import ldapurl, ldap
 
 def getTerminalSize():
   """
