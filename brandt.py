@@ -178,7 +178,7 @@ class LDAPSearch(object):
         else:
           if result_type == ldap.RES_SEARCH_ENTRY:
             self.__results.append(result_data[0])
-  return self.__results
+    return self.__results
 
   def attributelist(self, attribute):
     temp = {}
