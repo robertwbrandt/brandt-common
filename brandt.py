@@ -94,8 +94,12 @@ class LDAPSearch(object):
     if source != None:
       self.search(source, funct)
 
-  funct = property(lambda self: self.__funct, lambda self, funct: self.__funct = funct)
+  funct = property(lambda self: self.__funct, lambda self, funct: lambda self, funct: setattr(self, '_LDAPSearch__funct', funct))
   
+
+
+
+
   def getSource(self):
     return self.__source
 
