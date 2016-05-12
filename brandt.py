@@ -96,10 +96,6 @@ class LDAPSearch(object):
 
   funct = property(lambda self: self.__funct, lambda self, funct: lambda self, funct: setattr(self, '_LDAPSearch__funct', funct))
   
-
-
-
-
   def getSource(self):
     return self.__source
 
