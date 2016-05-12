@@ -85,13 +85,16 @@ class LDAPSearch(object):
     ldaps://ldap1.opw.ie/ou=userapp,o=opw?cn,mail?sub??bindname=cn=brandtb%2cou=it%2co=opw,X-BINDPW=password
   """
   
-  def __init__(self, source = None):
+  def __init__(self, source = None, funct = lambda x: x):
     self.__source = None
+    self.__funct = None
     self.__type = None
     self.__sourcename = None
     self.__results = None 
     if source != None:
-      self.search(source)
+      self.search(source, funct)
+
+  funct = property(lambda self: self.__funct, lambda self, funct: self.__funct = funct)
   
   def getSource(self):
     return self.__source
@@ -128,6 +131,7 @@ class LDAPSearch(object):
       raise ValueError, "Parameter source does not seem to be a LDAP URL or File."
 
   source = property(getSource, setSource)
+  source = property(getSource, setSource)
 
   def getType(self):
     if self.__type != None:
@@ -149,9 +153,10 @@ class LDAPSearch(object):
     return self.__results
   results = property(getresults)
   
-  def search(self, source):
+  def search(self, source, funct = lambda x: x):
     timeout = 0
     self.source = source
+    self.funct = funct
     self.__results = []
     if self.type == "file" or self.type == "stream":
       ldifFile = ldif.LDIFRecordList(self.__source)
