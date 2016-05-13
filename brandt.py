@@ -2,7 +2,7 @@
 """
 Common Python code used between different projects
 """
-import fcntl, termios, struct, os
+import fcntl, termios, struct, os, re
 import ldapurl, ldap
 
 def getTerminalSize():
@@ -75,6 +75,12 @@ def strXML(string):
   global allowedASCII
   return ''.join([ s for s in str(string) if ord(s) in allowedASCII ])
 
+def formatDN(dn):
+  dn = str(dn).strip().lower()
+  dn = re.sub("\s+,\s+",",",dn)
+  dn = re.sub("\s+=\s+",",",dn)
+  return dn
+
 class LDAPSearch(object):
   """ 
   The class returns a List of a Truples of a String and a Dicionary of a List
@@ -85,17 +91,15 @@ class LDAPSearch(object):
     ldaps://ldap1.opw.ie/ou=userapp,o=opw?cn,mail?sub??bindname=cn=brandtb%2cou=it%2co=opw,X-BINDPW=password
   """
   
-  def __init__(self, source = None, funct = lambda x: x):
+  def __init__(self, source = None):
     self.__source = None
-    self.__funct = None
     self.__type = None
     self.__sourcename = None
     self.__results = None 
+    self.__resultsDict = None 
     if source != None:
-      self.search(source, funct)
-
-  funct = property(lambda self: self.__funct, lambda self, funct: lambda self, funct: setattr(self, '_LDAPSearch__funct', funct))
-  
+      self.search(source)
+ 
   def getSource(self):
     return self.__source
 
@@ -131,7 +135,6 @@ class LDAPSearch(object):
       raise ValueError, "Parameter source does not seem to be a LDAP URL or File."
 
   source = property(getSource, setSource)
-  source = property(getSource, setSource)
 
   def getType(self):
     if self.__type != None:
@@ -152,11 +155,24 @@ class LDAPSearch(object):
   def getresults(self):
     return self.__results
   results = property(getresults)
-  
-  def search(self, source, funct = lambda x: x):
+
+  def __doNothing(*x): return x[-1]
+
+  def resultsDict(self, functDN = __doNothing, functAttr = __doNothing, functValue = __doNothing):
+    if self.__results and not self.__resultsDict:
+      self.__resultsDict = {}
+      for entry in self.__results:
+        if entry and len(entry) == 2:
+          dn = functDN(entry[0])
+          self.__resultsDict[dn] = {}
+          for attr in sorted(entry[1].keys()):
+            value = sorted([ functValue(functAttr(attr), v) for v in entry[1][attr] ])
+            self.__resultsDict[dn].update( { functAttr(attr): value } )
+    return self.__resultsDict
+
+  def search(self, source):
     timeout = 0
     self.source = source
-    self.funct = funct
     self.__results = []
     if self.type == "file" or self.type == "stream":
       ldifFile = ldif.LDIFRecordList(self.__source)
