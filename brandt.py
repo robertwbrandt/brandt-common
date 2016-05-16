@@ -3,7 +3,8 @@
 Common Python code used between different projects
 """
 import fcntl, termios, struct, os, re
-import ldapurl, ldap
+import ldapurl, ldap, sys
+import syslog as SYSLOG
 
 def getTerminalSize():
   """
@@ -218,9 +219,37 @@ class LDAPSearch(object):
         tmp += str(result) + "\n"
     return tmp.strip("\n")
     
-
-
-
+def syslog(message, ident = "", priority = "info", facility = "syslog", options = []):
+  """
+  Send a string to syslog and return that same string.
+  """
+  priority = { "emerg":SYSLOG.LOG_EMERG, "alert":SYSLOG.LOG_ALERT, 
+               "crit":SYSLOG.LOG_CRIT, "err":SYSLOG.LOG_ERR, 
+               "warning":SYSLOG.LOG_WARNING, "notice":SYSLOG.LOG_NOTICE, 
+               "info":SYSLOG.LOG_INFO, "debug":SYSLOG.LOG_DEBUG }.get(str(priority).lower(),0)
+  facility = { "kern":SYSLOG.LOG_KERN, "user":SYSLOG.LOG_USER, 
+               "mail":SYSLOG.LOG_MAIL, "daemon":SYSLOG.LOG_DAEMON, 
+               "auth":SYSLOG.LOG_AUTH, "lpr":SYSLOG.LOG_LPR, 
+               "news":SYSLOG.LOG_NEWS, "uucp":SYSLOG.LOG_UUCP, 
+               "cron":SYSLOG.LOG_CRON, "syslog":SYSLOG.LOG_SYSLOG, 
+               "local0":SYSLOG.LOG_LOCAL0, "local1":SYSLOG.LOG_LOCAL1, 
+               "local2":SYSLOG.LOG_LOCAL2, "local3":SYSLOG.LOG_LOCAL3, 
+               "local4":SYSLOG.LOG_LOCAL4, "local5":SYSLOG.LOG_LOCAL5, 
+               "local6":SYSLOG.LOG_LOCAL6, "local7":SYSLOG.LOG_LOCAL7 }.get(str(facility).lower(),0)
+  option = 0
+  for opt in options:
+    option += { "pid":SYSLOG.LOG_PID, "cons":SYSLOG.LOG_CONS, "ndelay":SYSLOG.LOG_NDELAY, 
+                "nowait":SYSLOG.LOG_NOWAIT, "perror":SYSLOG.LOG_PERROR }.get(str(opt).lower(),0)
+  message = str(message)
+  ident = str(ident)
+  if not ident: ident = os.path.basename(sys.argv[0])
+  SYSLOG.openlog(ident = ident, logoption = option, facility = facility)
+  add = ""
+  for line in message.split("\n"):
+    SYSLOG.syslog(priority, add + line)
+    add = " "
+  SYSLOG.closelog()
+  return message
 
 
 # class find(object):
