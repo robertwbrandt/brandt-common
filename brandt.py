@@ -240,14 +240,15 @@ def syslog(message, ident = "", priority = "info", facility = "syslog", options 
   for opt in options:
     option += { "pid":SYSLOG.LOG_PID, "cons":SYSLOG.LOG_CONS, "ndelay":SYSLOG.LOG_NDELAY, 
                 "nowait":SYSLOG.LOG_NOWAIT, "perror":SYSLOG.LOG_PERROR }.get(str(opt).lower(),0)
-  message = str(message).strip("\n")
+  message = str(message)
   ident = str(ident)
   if not ident: ident = os.path.basename(sys.argv[0])
   SYSLOG.openlog(ident = ident, logoption = option, facility = facility)
   add = ""
   for line in message.split("\n"):
-    SYSLOG.syslog(priority, add + line)
-    add = " "
+    if line:
+      SYSLOG.syslog(priority, add + line)
+      add = " "
   SYSLOG.closelog()
   return message
 
