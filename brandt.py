@@ -43,6 +43,7 @@ def printTable(items, columns, separator="\t"):
   """  
   tmp = []
   widths=[]
+  output = ""
 
   for i in range(0,len(items),columns):
     tmp.append([])
@@ -57,7 +58,7 @@ def printTable(items, columns, separator="\t"):
   for i in range(len(tmp)):
     for j in range(columns):
       tmp[i][j] = tmp[i][j].ljust(widths[j])
-    print separator.join(tmp[i])
+    output += separator.join(tmp[i]) + '\n'
 
 
 def proper(string):
