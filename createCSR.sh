@@ -62,7 +62,8 @@ fi
 
 eval set -- "$_args";
 
-_email="admin@opw.ie"
+# _email="admin@opw.ie"
+_email=""
 _key=""
 _pass=""
 _remove=""
@@ -113,7 +114,10 @@ for _domain in ${_domains}; do
 done
 _SAN="san:${_SAN:1}"
 _DNS="subjectAltName=${_DNS:1}"
-_subj="/C=IE/ST=Dublin/L=Dublin/O=Office of Public Works/OU=ICT Unit${_CNs}/emailAddress=${_email}/${_DNS}"
+
+_subj="/C=IE/ST=Dublin/L=Dublin/O=Office of Public Works/OU=ICT Unit"
+[ -n "$_email" ] && _subj="${_subj}/emailAddress=${_email}"
+_subj="${_subj}${_CNs}/${_DNS}"
 
 _config=$( cat /etc/ssl/openssl.cnf )
 _config="${_config}\n[SAN]\n${_DNS}"
@@ -137,6 +141,6 @@ fi
 echo "Writing new Certificate Signed Request (CSR) to '${_csr}'"
 
 echo -e "\nVisit: https://ca-i.i.opw.ie/certsrv/certrqxt.asp"
+cat "${_csr}"
 echo -e "Additional Attributes"
 echo -e "${_SAN}\n"
-cat "${_csr}"
