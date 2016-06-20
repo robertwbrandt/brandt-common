@@ -2,9 +2,12 @@
 """
 Common Python code used between different projects
 """
-import fcntl, termios, struct, os, re
-import ldapurl, ldap, sys
+import fcntl, termios, struct, os, re, sys
 import syslog as SYSLOG
+
+import ldapurl, ldap
+from ldap.ldapobject import LDAPObject
+from ldap.controls import SimplePagedResultsControl
 
 def getTerminalSize():
   """
@@ -83,6 +86,57 @@ def formatDN(dn):
   dn = re.sub("\s+=\s+",",",dn)
   return dn
 
+# https://bitbucket.org/jaraco/python-ldap/src/f208b6338a28/Demo/paged_search_ext_s.py
+class _PagedResultsSearchObject():
+  def paged_search_ext_s(self,base,scope,filterstr='(objectClass=*)',attrlist=None,attrsonly=0,serverctrls=None,clientctrls=None,timeout=-1,sizelimit=0,page_size = 1000):
+    """
+    Behaves exactly like LDAPObject.search_ext_s() but internally uses the
+    simple paged results control to retrieve search results in chunks.
+    This is non-sense for really large results sets which you would like
+    to process one-by-one
+    """
+    req_ctrl = SimplePagedResultsControl(True,size=page_size,cookie='')
+
+    # Send first search request
+    msgid = self.search_ext(
+      base,
+      ldap.SCOPE_SUBTREE,
+      search_flt,
+      attrlist=searchreq_attrlist,
+      serverctrls=(serverctrls or [])+[req_ctrl]
+    )
+
+    result_pages = 0
+    all_results = []
+    
+    while True:
+      rtype, rdata, rmsgid, rctrls = self.result3(msgid)
+      all_results.extend(rdata)
+      result_pages += 1
+      # Extract the simple paged results response control
+      pctrls = [
+        c
+        for c in rctrls
+        if c.controlType == SimplePagedResultsControl.controlType
+      ]
+      if pctrls:
+        if pctrls[0].cookie:
+            # Copy cookie from response control to request control
+            req_ctrl.cookie = pctrls[0].cookie
+            msgid = self.search_ext(
+              base,
+              ldap.SCOPE_SUBTREE,
+              search_flt,
+              attrlist=searchreq_attrlist,
+              serverctrls=(serverctrls or [])+[req_ctrl]
+            )
+        else:
+            break
+    return result_pages,all_results
+
+class _MyLDAPObject(LDAPObject,_PagedResultsSearchObject):
+  pass
+
 class LDAPSearch(object):
   """ 
   The class returns a List of a Truples of a String and a Dicionary of a List
@@ -93,14 +147,19 @@ class LDAPSearch(object):
     ldaps://ldap1.opw.ie/ou=userapp,o=opw?cn,mail?sub??bindname=cn=brandtb%2cou=it%2co=opw,X-BINDPW=password
   """
   
-  def __init__(self, source = None):
+  def __init__(self, source = None, ldap_version = None, trace_level = None, debug_level = None, referrals = None):
     self.__source = None
     self.__type = None
     self.__sourcename = None
+    self.__result_pages = None
     self.__results = None 
-    self.__resultsDict = None 
-    if source != None:
-      self.search(source)
+    self.__resultsDict = None
+    self.__ldap_version = 3
+    self.__trace_level = 0
+    self.__debug_level = 0
+    self.__referrals = False
+
+    if source != None: self.search(source, ldap_version, trace_level, debug_level, referrals)
  
   def getSource(self):
     return self.__source
@@ -157,6 +216,7 @@ class LDAPSearch(object):
   def getresults(self):
     return self.__results
   results = property(getresults)
+  result_pages = property(lambda self: self.__result_pages)
 
   def __doNothing(*x): return x[-1]
 
@@ -172,7 +232,7 @@ class LDAPSearch(object):
             self.__resultsDict[dn].update( { functAttr(attr): value } )
     return self.__resultsDict
 
-  def search(self, source):
+  def search(self, source, ldap_version = None, trace_level = None, debug_level = None, referrals = None):
     timeout = 0
     self.source = source
     self.__results = []
@@ -183,26 +243,37 @@ class LDAPSearch(object):
 
     elif self.type == "url":
       filterstr = self.source.filterstr
-      #extensions = self.source.extensions
       if filterstr == None: filterstr = "(objectClass=*)"
-    
       con_string = "%s://%s" % (self.source.urlscheme, self.source.hostport)    
-      l = ldap.initialize(con_string)
+      extensions = self.source.extensions
+      
+      if ldap_version != None: self.__ldap_version = int(ldap_version)
+      if trace_level != None: self.__trace_level = int(trace_level)
+      if debug_level != None: self.__debug_level = int(debug_level)
+      if referrals != None: self.__referrals = bool(referrals)
+      ldap.set_option(ldap.OPT_DEBUG_LEVEL,self.__debug_level)
+      ldap.set_option(ldap.OPT_REFERRALS, self.__referrals)
+
+      l = _MyLDAPObject(con_string,trace_level=self.__trace_level)
+      l.protocol_version = self.__ldap_version
       #l.start_tls_s()
       if self.source.who:
-        l.bind_s(self.source.who, self.source.cred)
+        l.simple_bind_s(self.source.who, self.source.cred)
       else:
-        l.bind_s('', '') # anonymous bind
-  
-      ldap_result_id = l.search(self.source.dn, self.source.scope, filterstr, self.source.attrs)
-      while 1:
-        result_type, result_data = l.result(ldap_result_id, timeout)
-        if (result_data == []):
-          break
-        else:
-          if result_type == ldap.RES_SEARCH_ENTRY:
-            self.__results.append(result_data[0])
-    return self.__results
+        l.simple_bind_s('', '') # anonymous bind
+
+      # Send search request
+      self.__result_pages, self.__results = l.paged_search_ext_s(
+        self.source.dn,
+        self.source.scope,
+        filterstr,
+        attrlist=self.source.attrs,
+        serverctrls=None,
+        page_size = 1000
+      )
+
+      l.unbind_s()
+      return self.__results
 
   def attributelist(self, attribute):
     temp = {}
@@ -305,95 +376,20 @@ def syslog(message, ident = "", priority = "info", facility = "syslog", options 
 #     pass
 
 
-# https://bitbucket.org/jaraco/python-ldap/src/f208b6338a28/Demo/paged_search_ext_s.py?fileviewer=file-view-default
-# http://mattfahrner.com/2014/03/09/using-paged-controls-with-python-and-ldap/
-
-from ldap.ldapobject import LDAPObject
-import ldap,pprint
-from ldap.controls import SimplePagedResultsControl
-
-class PagedResultsSearchObject:
-  page_size = 50
-
-  def paged_search_ext_s(self,base,scope,filterstr='(objectClass=*)',attrlist=None,attrsonly=0,serverctrls=None,clientctrls=None,timeout=-1,sizelimit=0):
-    """
-    Behaves exactly like LDAPObject.search_ext_s() but internally uses the
-    simple paged results control to retrieve search results in chunks.
-    
-    This is non-sense for really large results sets which you would like
-    to process one-by-one
-    """
-    req_ctrl = SimplePagedResultsControl(True,size=self.page_size,cookie='')
-
-    # Send first search request
-    msgid = self.search_ext(
-      base,
-      ldap.SCOPE_SUBTREE,
-      search_flt,
-      attrlist=searchreq_attrlist,
-      serverctrls=(serverctrls or [])+[req_ctrl]
-    )
-
-    result_pages = 0
-    all_results = []
-    
-    while True:
-      rtype, rdata, rmsgid, rctrls = self.result3(msgid)
-      all_results.extend(rdata)
-      result_pages += 1
-      # Extract the simple paged results response control
-      pctrls = [
-        c
-        for c in rctrls
-        if c.controlType == SimplePagedResultsControl.controlType
-      ]
-      if pctrls:
-        if pctrls[0].cookie:
-            # Copy cookie from response control to request control
-            req_ctrl.cookie = pctrls[0].cookie
-            msgid = self.search_ext(
-              base,
-              ldap.SCOPE_SUBTREE,
-              search_flt,
-              attrlist=searchreq_attrlist,
-              serverctrls=(serverctrls or [])+[req_ctrl]
-            )
-        else:
-            break
-    return result_pages,all_results
-
-
-class MyLDAPObject(LDAPObject,PagedResultsSearchObject):
-  pass
 
 
 
 
 # Start program
 if __name__ == "__main__":
-  url = "ldap://localhost:1390/"
-  base = "dc=stroeder,dc=de"
+  url = "ldaps://opwdc2:636/"
+  base = "dc=i,dc=opw,dc=ie"
+  # url = "ldaps://nds2:636/"
+  # base = "o=opw"
   search_flt = r'(objectClass=*)'
 
   searchreq_attrlist=['cn','entryDN','entryUUID','mail','objectClass']
 
-
-  #ldap.set_option(ldap.OPT_DEBUG_LEVEL,255)
-  ldap.set_option(ldap.OPT_REFERRALS, 0)
-  l = MyLDAPObject(url,trace_level=2)
-  l.protocol_version = 3
-  l.simple_bind_s("", "")
-  l.page_size=10
-
-  # Send search request
-  result_pages,all_results = l.paged_search_ext_s(
-    base,
-    ldap.SCOPE_SUBTREE,
-    search_flt,
-    attrlist=searchreq_attrlist,
-    serverctrls=None
-  )
-
-  l.unbind_s()
-
-  print 'Received %d results in %d pages.' % (len(all_results),result_pages)
+  url = "ldap://opwdc3.i.opw.ie:389/dc=i,dc=opw,dc=ie?cn,mail?sub"
+  l = LDAPSearch(url)
+  print l.results
