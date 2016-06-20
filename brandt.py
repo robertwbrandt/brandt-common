@@ -100,9 +100,9 @@ class _PagedResultsSearchObject():
     # Send first search request
     msgid = self.search_ext(
       base,
-      ldap.SCOPE_SUBTREE,
-      search_flt,
-      attrlist=searchreq_attrlist,
+      scope,
+      filterstr,
+      attrlist=attrlist,
       serverctrls=(serverctrls or [])+[req_ctrl]
     )
 
@@ -125,9 +125,9 @@ class _PagedResultsSearchObject():
             req_ctrl.cookie = pctrls[0].cookie
             msgid = self.search_ext(
               base,
-              ldap.SCOPE_SUBTREE,
-              search_flt,
-              attrlist=searchreq_attrlist,
+              scope,
+              filterstr,
+              attrlist=attrlist,
               serverctrls=(serverctrls or [])+[req_ctrl]
             )
         else:
