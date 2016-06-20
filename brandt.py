@@ -98,7 +98,7 @@ class _PagedResultsSearchObject():
     req_ctrl = SimplePagedResultsControl(True,size=page_size,cookie='')
 
     # Send first search request
-    print "Here"
+    print "Here", base, scope, filterstr
     msgid = self.search_ext(
       base,
       scope,
