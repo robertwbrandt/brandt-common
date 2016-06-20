@@ -224,7 +224,7 @@ class LDAPSearch(object):
     if self.__results and not self.__resultsDict:
       self.__resultsDict = {}
       for entry in self.__results:
-        if entry and len(entry) == 2:
+        if entry and len(entry) == 2 and entry[0]:
           dn = functDN(entry[0])
           self.__resultsDict[dn] = {}
           for attr in sorted(entry[1].keys()):
@@ -379,10 +379,12 @@ def syslog(message, ident = "", priority = "info", facility = "syslog", options 
 
 
 
-
 # Start program
 if __name__ == "__main__":
-  url = "ldaps://opwdc2:636/"
-  base = "dc=i,dc=opw,dc=ie"
+  url = "ldaps://opwdc2:636/dc=i,dc=opw,dc=ie?cn,mail?sub"
+  #url = "ldaps://nds2:636/o=opw?cn,mail?sub"
+#    ldaps://ldap1.opw.ie/ou=userapp,o=opw?cn,mail?sub??bindname=cn=brandtb%2cou=it%2co=opw,X-BINDPW=password
 
-  print url
+  # for tmp in LDAPSearch(url).results:
+  #   print tmp
+  print LDAPSearch(url).resultsDict()
