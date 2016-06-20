@@ -88,17 +88,17 @@ def formatDN(dn):
 
 # https://bitbucket.org/jaraco/python-ldap/src/f208b6338a28/Demo/paged_search_ext_s.py
 class _PagedResultsSearchObject():
-  def paged_search_ext_s(self,base,scope,filterstr='(objectClass=*)',attrlist=None,attrsonly=0,serverctrls=None,clientctrls=None,timeout=-1,sizelimit=0,page_size=1000):
+  def paged_search_ext_s(self,base,scope,filterstr='(objectClass=*)',attrlist=None,attrsonly=0,serverctrls=None,clientctrls=None,timeout=-1,sizelimit=0,criticality=True,page_size=1000):
     """
     Behaves exactly like LDAPObject.search_ext_s() but internally uses the
     simple paged results control to retrieve search results in chunks.
     This is non-sense for really large results sets which you would like
     to process one-by-one
     """
-    req_ctrl = SimplePagedResultsControl(True,size=page_size,cookie='')
+
+    req_ctrl = SimplePagedResultsControl(criticality,size=page_size,cookie='')
 
     # Send first search request
-    print "Here", base, scope, filterstr
     msgid = self.search_ext(
       base,
       scope,
@@ -266,14 +266,27 @@ class LDAPSearch(object):
         l.simple_bind_s('', '') # anonymous bind
 
       # Send search request
-      self.__result_pages, self.__results = l.paged_search_ext_s(
-        self.source.dn,
-        self.source.scope,
-        filterstr,
-        attrlist=self.source.attrs,
-        serverctrls=None,
-        page_size=self.__page_size
-      )
+      try:
+        self.__result_pages, self.__results = l.paged_search_ext_s(
+          self.source.dn,
+          self.source.scope,
+          filterstr,
+          attrlist=self.source.attrs,
+          serverctrls=None,
+          page_size=self.__page_size
+        )
+      except ldap.UNAVAILABLE_CRITICAL_EXTENSION:
+        self.__result_pages = 0
+        self.__results = l.search_ext_s(
+          self.source.dn,
+          self.source.scope,
+          filterstr,
+          attrlist=self.source.attrs,
+          serverctrls=None
+        )
+      except: 
+        exc_type, exc_value, exc_traceback = sys.exc_info()        
+        raise exc_type, exc_value
 
       l.unbind_s()
       return self.__results
@@ -386,6 +399,7 @@ def syslog(message, ident = "", priority = "info", facility = "syslog", options 
 if __name__ == "__main__":
   url = "ldaps://opwdc2:636/dc=i,dc=opw,dc=ie?cn,mail?sub"
   #url = "ldaps://nds2:636/o=opw?cn,mail?sub"
+  url = "ldap://dublinnotes:389/?cn,mail?sub"
 #    ldaps://ldap1.opw.ie/ou=userapp,o=opw?cn,mail?sub??bindname=cn=brandtb%2cou=it%2co=opw,X-BINDPW=password
 
   # for tmp in LDAPSearch(url).results:
