@@ -88,7 +88,7 @@ def formatDN(dn):
 
 # https://bitbucket.org/jaraco/python-ldap/src/f208b6338a28/Demo/paged_search_ext_s.py
 class _PagedResultsSearchObject():
-  def paged_search_ext_s(self,base,scope,filterstr='(objectClass=*)',attrlist=None,attrsonly=0,serverctrls=None,clientctrls=None,timeout=-1,sizelimit=0,page_size = 1000):
+  def paged_search_ext_s(self,base,scope,filterstr='(objectClass=*)',attrlist=None,attrsonly=0,serverctrls=None,clientctrls=None,timeout=-1,sizelimit=0,page_size=1000):
     """
     Behaves exactly like LDAPObject.search_ext_s() but internally uses the
     simple paged results control to retrieve search results in chunks.
@@ -147,7 +147,7 @@ class LDAPSearch(object):
     ldaps://ldap1.opw.ie/ou=userapp,o=opw?cn,mail?sub??bindname=cn=brandtb%2cou=it%2co=opw,X-BINDPW=password
   """
   
-  def __init__(self, source = None, ldap_version = None, trace_level = None, debug_level = None, referrals = None):
+  def __init__(self, source = None, ldap_version = None, trace_level = None, debug_level = None, referrals = None, page_size = None):):
     self.__source = None
     self.__type = None
     self.__sourcename = None
@@ -158,8 +158,9 @@ class LDAPSearch(object):
     self.__trace_level = 0
     self.__debug_level = 0
     self.__referrals = False
+    self.__page_size = 1000
 
-    if source != None: self.search(source, ldap_version, trace_level, debug_level, referrals)
+    if source != None: self.search(source, ldap_version, trace_level, debug_level, referrals, page_size)
  
   def getSource(self):
     return self.__source
@@ -232,7 +233,7 @@ class LDAPSearch(object):
             self.__resultsDict[dn].update( { functAttr(attr): value } )
     return self.__resultsDict
 
-  def search(self, source, ldap_version = None, trace_level = None, debug_level = None, referrals = None):
+  def search(self, source, ldap_version = None, trace_level = None, debug_level = None, referrals = None, page_size = None):
     timeout = 0
     self.source = source
     self.__results = []
@@ -248,11 +249,12 @@ class LDAPSearch(object):
       extensions = self.source.extensions
       
       if ldap_version != None: self.__ldap_version = int(ldap_version)
-      if trace_level != None: self.__trace_level = int(trace_level)
-      if debug_level != None: self.__debug_level = int(debug_level)
-      if referrals != None: self.__referrals = bool(referrals)
+      if trace_level != None:  self.__trace_level = int(trace_level)
+      if debug_level != None:  self.__debug_level = int(debug_level)
+      if referrals != None:    self.__referrals = bool(referrals)
+      if page_size != None:    self.__page_size = int(page_size)
       ldap.set_option(ldap.OPT_DEBUG_LEVEL,self.__debug_level)
-      ldap.set_option(ldap.OPT_REFERRALS, self.__referrals)
+      ldap.set_option(ldap.OPT_REFERRALS, int(self.__referrals))
 
       l = _MyLDAPObject(con_string,trace_level=self.__trace_level)
       l.protocol_version = self.__ldap_version
@@ -269,7 +271,7 @@ class LDAPSearch(object):
         filterstr,
         attrlist=self.source.attrs,
         serverctrls=None,
-        page_size = 1000
+        page_size=self.__page_size
       )
 
       l.unbind_s()
