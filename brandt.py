@@ -384,12 +384,5 @@ def syslog(message, ident = "", priority = "info", facility = "syslog", options 
 if __name__ == "__main__":
   url = "ldaps://opwdc2:636/"
   base = "dc=i,dc=opw,dc=ie"
-  # url = "ldaps://nds2:636/"
-  # base = "o=opw"
-  search_flt = r'(objectClass=*)'
 
-  searchreq_attrlist=['cn','entryDN','entryUUID','mail','objectClass']
-
-  url = "ldap://opwdc3.i.opw.ie:389/dc=i,dc=opw,dc=ie?cn,mail?sub"
-  l = LDAPSearch(url)
-  print l.results
+  print url
