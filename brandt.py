@@ -147,7 +147,7 @@ class LDAPSearch(object):
     ldaps://ldap1.opw.ie/ou=userapp,o=opw?cn,mail?sub??bindname=cn=brandtb%2cou=it%2co=opw,X-BINDPW=password
   """
   
-  def __init__(self, source = None, ldap_version = None, trace_level = None, debug_level = None, referrals = None, page_size = None):):
+  def __init__(self, source = None, ldap_version = None, trace_level = None, debug_level = None, referrals = None, page_size = None):
     self.__source = None
     self.__type = None
     self.__sourcename = None
