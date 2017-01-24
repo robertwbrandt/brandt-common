@@ -164,7 +164,7 @@ shift 1
 [ -n "$_user" ] && getUserPass "$_user" "$_pass"
 
 # If using a Proxy Server
-if [ -z "$_proxy" ]; then
+if [ -n "$_proxy" ]; then
 	_ping=$( echo "$_proxy" | sed 's|.*://\(.*\):.*|\1|' )
 	if ping -c 1 "$_ping" > /dev/null
 	then
