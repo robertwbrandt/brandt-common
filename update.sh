@@ -26,17 +26,15 @@ fi
 
 [ ! -L "$_base/update" ] && ln -sf "$_this_script" "$_base/update"
 
-function getPassword() {
-	local _user="$1"
-	local _password=""
-	_prompt="Enter password for $_user: "
-	while IFS= read -p "$_prompt" -r -s -n 1 _char
-	do
-	    [[ $_char == $'\0' ]] && break
-	    _prompt='*'
-	    _password+="$_char"
-	done
-	echo "$_password"
+
+function getUserPass() {
+	_user="$1"
+	_pass="$2"
+
+	[ -z "$_user" ] && read -p "Enter the username: " _user
+	if [ -n "$_user" ] && [ -z "$_pass" ]; then
+		read -sp "Enter password for $_user: " _pass
+	fi
 }
 
 function pull() {
@@ -45,9 +43,14 @@ function pull() {
 	if [ -d "$_dir" ] && [ -d "$_dir/.git" ]; then
 		echo "from $_gitURL/$_basedir.git"
  		pushd "$1" > /dev/null
- 		if [ -n "$_user" ] && [ -n "$_pass" ]; then
- 			echo "Setting username and password"
- 			_gitURL=$( echo "$_gitURL" | sed "s|://|://$_user:$_pass@|" )
+		getUserPass "$_user" "$_pass"		 		
+ 		if [ -n "$_user" ]; then
+ 			echo "Setting username"
+ 			_gitURL=$( echo "$_gitURL" | sed "s|://|://$_user@|" )
+	 		if [ -n "$_pass" ]; then
+ 				echo "Setting password"
+ 				_gitURL=$( echo "$_gitURL" | sed "s|@|:$_pass@|" )
+ 			fi 		
  			git remote set-url origin "$_gitURL/$_basedir.git"
  		fi
 
@@ -71,12 +74,17 @@ function clone() {
 		return 1
 	else
 		echo "from $_gitURL/$_basedir.git"
- 		if [ -n "$_user" ] && [ -n "$_pass" ]; then
- 			echo "Setting username and password"
- 			_gitURL=$( echo "$_gitURL" | sed "s|://|://$_user:$_pass@|" )
+		getUserPass "$_user" "$_pass"		
+ 		if [ -n "$_user" ]; then
+ 			echo "Setting username"
+ 			_gitURL=$( echo "$_gitURL" | sed "s|://|://$_user@|" )
+	 		if [ -n "$_pass" ]; then
+ 				echo "Setting password"
+ 				_gitURL=$( echo "$_gitURL" | sed "s|@|:$_pass@|" )
+ 			fi 			
  		fi
  		git clone -v "$_gitURL/$_basedir.git" "$_basedir"
-		return $rc		
+		return $?	
 	fi
 }
 
@@ -153,13 +161,7 @@ done
 _project="$1"
 shift 1
 
-if [ -n "$_user" ]; then
-	_pass=$( getPassword "$_user" )
-	echo
-	if [ -z "$_pass" ]; then
-		usage 1 "You must enter a password!"
-	fi
-fi
+[ -n "$_user" ] && getUserPass "$_user" "$_pass"
 
 # If using a Proxy Server
 if [ -z "$_proxy" ]; then
