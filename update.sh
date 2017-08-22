@@ -2,7 +2,7 @@
 #
 #     Utility to update Brandt projects
 #     Bob Brandt <projects@brandt.ie>
-#          
+#
 #
 
 _version=1.2
