@@ -2,7 +2,7 @@
 #
 #     Utility to update Brandt projects
 #     Bob Brandt <projects@brandt.ie>
-#          
+#
 #
 
 _version=1.2
@@ -43,15 +43,22 @@ function pull() {
 	if [ -d "$_dir" ] && [ -d "$_dir/.git" ]; then
 		echo "from $_gitURL/$_basedir.git"
  		pushd "$1" > /dev/null
-		getUserPass "$_user" "$_pass"		 		
- 		if [ -n "$_user" ]; then
- 			echo "Setting username"
- 			_gitURL=$( echo "$_gitURL" | sed "s|://|://$_user@|" )
-	 		if [ -n "$_pass" ]; then
- 				echo "Setting password"
- 				_gitURL=$( echo "$_gitURL" | sed "s|@|:$_pass@|" )
- 			fi 		
- 			git remote set-url origin "$_gitURL/$_basedir.git"
+
+ 		username=""
+ 		password=""
+ 		storedUserPass=$( git config --get remote.origin.url | sed 's|.*://\([^@]*\)@.*|\1|' )
+ 		if [ -n "$storedUserPass" ]; then
+ 			username=$( echo "$storedUserPass" | sed 's|:.*||' )
+ 			password=$( echo "$storedUserPass" | sed 's|.*:||' )
+ 		else
+ 			username="$_user"
+ 			password="$_pass"
+ 		fi
+
+ 		if [ -n "$_user" ] && [ -n "$_pass" ]; then
+ 			echo "Setting username and password"
+ 			url=$( echo "$_gitURL" | sed "s|\(.*://\)\(.*\)|\1$_user:$_pass@\2/$_basedir.git|" )	
+ 			git remote set-url origin "$url"
  		fi
 
 		[ -n "$_force" ] && git reset --hard origin/master
@@ -74,16 +81,17 @@ function clone() {
 		return 1
 	else
 		echo "from $_gitURL/$_basedir.git"
-		getUserPass "$_user" "$_pass"		
- 		if [ -n "$_user" ]; then
- 			echo "Setting username"
- 			_gitURL=$( echo "$_gitURL" | sed "s|://|://$_user@|" )
-	 		if [ -n "$_pass" ]; then
- 				echo "Setting password"
- 				_gitURL=$( echo "$_gitURL" | sed "s|@|:$_pass@|" )
- 			fi 			
+
+ 		if [ -z "$_user" ] || [ -z "$_pass" ]; then
+			getUserPass "$_user" "$_pass"
+		fi
+		url="$_gitURL/$_basedir.git"
+ 		if [ -n "$_user" ] && [ -n "$_pass" ]; then
+ 			echo "Setting username and password"
+ 			url=$( echo "$_gitURL" | sed "s|\(.*://\)\(.*\)|\1$_user:$_pass@\2/$_basedir.git|" )	
  		fi
- 		git clone -v "$_gitURL/$_basedir.git" "$_basedir"
+
+ 		git clone -v "$url" "$_basedir"
 		return $?	
 	fi
 }
@@ -94,10 +102,25 @@ function push() {
 	if [ -d "$_dir" ] && [ -d "$_dir/.git" ]; then
 		echo "to $_gitURL/$_basedir.git"
  		pushd "$1" > /dev/null
+
+ 		username=""
+ 		password=""
+ 		storedUserPass=$( git config --get remote.origin.url | sed 's|.*://\([^@]*\)@.*|\1|' )
+ 		if [ -n "$storedUserPass" ]; then
+ 			username=$( echo "$storedUserPass" | sed 's|:.*||' )
+ 			password=$( echo "$storedUserPass" | sed 's|.*:||' )
+ 		else
+ 			username="$_user"
+ 			password="$_pass"
+ 		fi
+
+ 		if [ -z "$username" ] || [ -z "$password" ]; then
+			getUserPass "$_user" "$_pass"
+		fi
  		if [ -n "$_user" ] && [ -n "$_pass" ]; then
  			echo "Setting username and password"
- 			_gitURL=$( echo "$_gitURL" | sed "s|://|://$_user:$_pass@|" )
- 			git remote set-url origin "$_gitURL/$_basedir.git"
+ 			url=$( echo "$_gitURL" | sed "s|\(.*://\)\(.*\)|\1$_user:$_pass@\2/$_basedir.git|" )	
+ 			git remote set-url origin "$url" 			
  		fi
  		git add --all -v
  		git commit --all -v -m "${_location} $( date '+%Y-%m-%d %H:%M:%S' )"
@@ -164,7 +187,7 @@ shift 1
 [ -n "$_user" ] && getUserPass "$_user" "$_pass"
 
 # If using a Proxy Server
-if [ -z "$_proxy" ]; then
+if [ -n "$_proxy" ]; then
 	_ping=$( echo "$_proxy" | sed 's|.*://\(.*\):.*|\1|' )
 	if ping -c 1 "$_ping" > /dev/null
 	then
